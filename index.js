@@ -76,6 +76,23 @@ async function run() {
   })
 
 
+  //get all jobs posted by specif USER --> my posted jobs
+  app.get('/jobs/:email',async(req,res) =>{
+    const email = req.params.email
+    const query = {'buyer.email':email}
+    const result = await jobsCollection.find(query).toArray()
+    res.send(result)
+  })
+  
+  //get all jobs posted by specif USER --> my posted jobs
+  app.get('/jobs/:email',async(req,res) =>{
+    const email = req.params.email
+    const query = {'buyer.email':email}
+    const result = await jobsCollection.find(query).toArray()
+    res.send(result)
+  })
+
+
 
 
     // Send a ping to confirm a successful connection
