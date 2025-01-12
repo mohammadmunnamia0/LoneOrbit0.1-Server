@@ -1,57 +1,95 @@
-const { MongoClient, ServerApiVersion } = require('mongodb'); //1
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 
-const express = require('express')
-const cors = require('cors')
-require('dotenv').config()
-const port = process.env.PORT || 9000
+const express = require("express");
+const cors = require("cors");
+require("dotenv").config();
+const port = process.env.PORT || 9000;
 
-const app = express()
+const app = express();
 
 const coreOption = {
-    origin :['http://localhost:5173'],
-        credentials : true,
-        optionSuccessStatus : 200,
-}
+  origin: ["http://localhost:5173"],
+  credentials: true,
+  optionSuccessStatus: 200,
+};
 
-app.use(cors(coreOption))
-app.use(express.json)
+// Middleware
+app.use(cors(coreOption));
+app.use(express.json()); // Added parentheses to correctly invoke the middleware
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@database.1mmgb.mongodb.net/?retryWrites=true&w=majority&appName=DataBase`;
- //2
+
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
-    serverApi: {
-      version: ServerApiVersion.v1,
-      strict: true,
-      deprecationErrors: true,
-    }
-  });
-  async function run() {
-    try {
+  serverApi: {
+    version: ServerApiVersion.v1,
+    strict: true,
+    deprecationErrors: true,
+  },
+});
 
-        const jobsCollection = client.db('LoneOrbit').collection('jobs')
-        const jobsCollection = client.db('LoneOrbit').collection('jobs')
-        
-      //getting data from MongoDB
+async function run() {
+  try {
+    const jobsCollection = client.db("LoneOrbit1").collection("jobs");
+    const bidsCollection = client.db("LoneOrbit1").collection("bids");
 
-        app.get('/jobs', async (req, res) =>{
+    // Fetch data from MongoDB
+    app.get("/jobs", async (req, res) => {
+      try {
+        const jobsData = await jobsCollection.find().toArray();
+        res.send(jobsData);
+      } catch (error) {
+        console.error("Error fetching jobs:", error);
+        res.status(500).send({ error: "Failed to fetch jobs data" });
+      }
+    });
 
-        })
-
-
-      // Send a ping to confirm a successful connection
-      await client.db("admin").command({ ping: 1 });
-      console.log("Pinged your deployment. You successfully connected to MongoDB!");
-    } 
+    //get a single job data from db using mongodb
+    app.get('/job/:id', async (req, res) =>{
     
-    finally {
-      
-    }
-  }
-  run().catch(console.dir); //3
+     const id =  req.params.id;
 
-app.get('/',(req, res ) => {
-    res.send ('Hello prof Server')
+     const query = { _id:new ObjectId(id)}
+     const result = await jobsCollection.findOne(query)
+
+    res.send(result)
 })
 
-app.listen(port,()=>console.log(`Run on ${port}`))
+
+  //set/save bid data in MOngoDB
+  app.post("/bid", async (req, res) => {
+    const bidData = req.body
+    console.log(bidData); 
+    // just to check the data is sending on nor
+    const result = await bidsCollection.insertOne(bidData)
+    res.send(result);
+  })
+
+
+  //set/save job data in MOngoDB
+  app.post("/job", async (req, res) => {
+    const JobData = req.body
+    console.log(JobData); 
+    // just to check the data is sending on nor
+    const result = await jobsCollection.insertOne(JobData)
+    res.send(result);
+  })
+
+
+
+
+    // Send a ping to confirm a successful connection
+    await client.db("admin").command({ ping: 1 });
+    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+  } catch (error) {
+    console.error("Error in run function:", error);
+  }
+}
+
+run().catch(console.dir);
+
+app.get("/", (req, res) => {
+  res.send("Hello prof Server");
+});
+
+app.listen(port, () => console.log(`Server running on port ${port}`));
