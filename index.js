@@ -45,59 +45,76 @@ async function run() {
     });
 
     //get a single job data from db using mongodb
-    app.get('/job/:id', async (req, res) =>{
+    app.get("/job/:id", async (req, res) => {
+      const id = req.params.id;
+
+      const query = { _id: new ObjectId(id) };
+      const result = await jobsCollection.findOne(query);
+
+      res.send(result);
+    });
+
+    //set/save bid data in MOngoDB
+    app.post("/bid", async (req, res) => {
+      const bidData = req.body;
+      console.log(bidData);
+      // just to check the data is sending on nor
+      const result = await bidsCollection.insertOne(bidData);
+      res.send(result);
+    });
+
+    //set/save job data in MOngoDB
+    app.post("/job", async (req, res) => {
+      const JobData = req.body;
+      console.log(JobData);
+      // just to check the data is sending on nor
+      const result = await jobsCollection.insertOne(JobData);
+      res.send(result);
+    });
+
+    //get all jobs posted by specif USER --> my posted jobs
+    app.get("/jobs/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { "buyer.email": email };
+      const result = await jobsCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    // Delete job data
+    // app.delete("/jobs/:id", async (req, res) => {
+    //   const id = req.params.id;
+    //   const query = { _id: new ObjectId(id)};
+    //   const result = await jobsCollection.deleteOne(query);
+    //   res.send(result);
+    // });
+
+
+    app.delete('/job/:id', async (req, res) => {
+      const id= req.params.id;
+      console.log(`Request received to delete job with id: ${id}`);
     
-     const id =  req.params.id;
-
-     const query = { _id:new ObjectId(id)}
-     const result = await jobsCollection.findOne(query)
-
-    res.send(result)
-})
-
-
-  //set/save bid data in MOngoDB
-  app.post("/bid", async (req, res) => {
-    const bidData = req.body
-    console.log(bidData); 
-    // just to check the data is sending on nor
-    const result = await bidsCollection.insertOne(bidData)
-    res.send(result);
-  })
-
-
-  //set/save job data in MOngoDB
-  app.post("/job", async (req, res) => {
-    const JobData = req.body
-    console.log(JobData); 
-    // just to check the data is sending on nor
-    const result = await jobsCollection.insertOne(JobData)
-    res.send(result);
-  })
-
-
-  //get all jobs posted by specif USER --> my posted jobs
-  app.get('/jobs/:email',async(req,res) =>{
-    const email = req.params.email
-    const query = {'buyer.email':email}
-    const result = await jobsCollection.find(query).toArray()
-    res.send(result)
-  })
-  
-  //get all jobs posted by specif USER --> my posted jobs
-  app.get('/jobs/:email',async(req,res) =>{
-    const email = req.params.email
-    const query = {'buyer.email':email}
-    const result = await jobsCollection.find(query).toArray()
-    res.send(result)
-  })
-
+       try {
+        const query = { _id: new ObjectId(id)};
+        const result = await jobsCollection.deleteOne({ _id: new ObjectId(id) });
+        if (result.deletedCount > 0) {
+          res.status(200).json({ message: 'Job deleted successfully' });
+        } else {
+          res.status(404).json({ message: 'Job not found' });
+        }
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Internal Server Error' });
+      }
+    });
+    
 
 
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    console.log(
+      "Pinged your deployment. You successfully connected to MongoDB!"
+    );
   } catch (error) {
     console.error("Error in run function:", error);
   }
