@@ -88,27 +88,40 @@ async function run() {
     //   res.send(result);
     // });
 
-
-    app.delete('/job/:id', async (req, res) => {
-      const id= req.params.id;
+    app.delete("/job/:id", async (req, res) => {
+      const id = req.params.id;
       console.log(`Request received to delete job with id: ${id}`);
-    
-       try {
-        const query = { _id: new ObjectId(id)};
-        const result = await jobsCollection.deleteOne({ _id: new ObjectId(id) });
+
+      try {
+        const query = { _id: new ObjectId(id) };
+        const result = await jobsCollection.deleteOne({
+          _id: new ObjectId(id),
+        });
         if (result.deletedCount > 0) {
-          res.status(200).json({ message: 'Job deleted successfully' });
+          res.status(200).json({ message: "Job deleted successfully" });
         } else {
-          res.status(404).json({ message: 'Job not found' });
+          res.status(404).json({ message: "Job not found" });
         }
       } catch (error) {
         console.error(error);
-        res.status(500).json({ message: 'Internal Server Error' });
+        res.status(500).json({ message: "Internal Server Error" });
       }
     });
-    
 
-
+    //Update job in MOngoDB
+    app.put("/job/:id", async (req, res) => {
+      const id = req.params.id;
+      const jobData = req.body;
+      const query = { _id: new ObjectId(id) };
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: {
+          ...jobData,
+        },
+      };
+      const result = await jobsCollection.updateOne(query, updateDoc, options);
+      res.send(result);
+    });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
